@@ -1,0 +1,102 @@
+﻿{
+  "MyRectangle1": {
+    "content": {
+      "width": 100,
+      "height": 100,
+      "color": [ 1.0, 0.5, 0.2 ],
+      "text": "Foo"
+    },
+    "constraints": {
+      "left": {
+        "name": "ScreenLeft",
+        "direction": "right",
+        "value": 8.0
+      },
+      "top": {
+        "name": "ScreenTop",
+        "direction": "bottom",
+        "value": 10.0
+      }
+    }
+  },
+  "MyRectangle2": {
+    "content": {
+      "width": 100,
+      "height": 50,
+      "color": [ 0.2, 0.2, 1.0 ],
+      "text": "Boo"
+    },
+    "constraints": {
+      "right": {
+        "name": "ScreenRight",
+        "direction": "left",
+        "value": 12.0
+      },
+      "bottom": {
+        "name": "ScreenBottom",
+        "direction": "top",
+        "value": 90.0
+      }
+    }
+  },
+  "MyRectangle3": {
+    "content": {
+      "width": 0,
+      "height": 0,
+      "color": [ 0.2, 1.0, 0.2 ],
+      "text": "Bar"
+    },
+    "constraints": {
+      "left": {
+        "name": "MyRectangle1",
+        "direction": "right",
+        "value": 8.0
+      },
+      "right": {
+        "name": "MyRectangle2",
+        "direction": "left",
+        "value": 8.0
+      },
+      "top": {
+        "name": "MyRectangle1",
+        "direction": "bottom",
+        "value": 8.0
+      },
+      "bottom": {
+        "name": "MyRectangle2",
+        "direction": "top",
+        "value": 8.0
+      }
+    }
+  },
+  "MyRectangle4": {
+    "content": {
+      "width": 0,
+      "height": 0,
+      "color": [ 0.5, 0.5, 0.5 ],
+      "text": "하하 난 직사각형이다"
+    },
+    "constraints": {
+      "left": {
+        "name": "MyRectangle3",
+        "direction": "left",
+        "value": 20.0
+      },
+      "right": {
+        "name": "MyRectangle3",
+        "direction": "right",
+        "value": 20.0
+      },
+      "top": {
+        "name": "MyRectangle3",
+        "direction": "top",
+        "value": 50.0
+      },
+      "bottom": {
+        "name": "MyRectangle3",
+        "direction": "bottom",
+        "value": 20.0
+      }
+    }
+  }
+}
