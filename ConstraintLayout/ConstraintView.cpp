@@ -109,7 +109,7 @@ bool ConstraintView::OnUpdate()
 			if (isnan(right))
 				x = left, width = elem.elem.width;
 			else if (elem.elem.width != 0)
-				x = (_width - elem.elem.width) / 2.0f, width = elem.elem.width;
+				x = (right + left - elem.elem.width) / 2.0f, width = elem.elem.width;
 			else
 				x = left, width = right - left;
 		}
@@ -127,7 +127,7 @@ bool ConstraintView::OnUpdate()
 			if (isnan(bottom))
 				y = top, height = elem.elem.height;
 			else if (elem.elem.height != 0)
-				y = (_height - elem.elem.height) / 2.0f, height = elem.elem.height;
+				y = (bottom + top - elem.elem.height) / 2.0f, height = elem.elem.height;
 			else
 				y = top, height = bottom - top;
 		}
