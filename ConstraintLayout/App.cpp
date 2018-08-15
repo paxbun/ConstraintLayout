@@ -11,8 +11,8 @@ float				App::_dpiX = 0.0f;
 float				App::_dpiY = 0.0f;
 App				*	App::_instance = nullptr;
 
-ID2D1Factory	*	App::_pD2DFactory = nullptr;
-IDWriteFactory	*	App::_pDWriteFactory = nullptr;
+ID2D1Factory1		*	App::_pD2DFactory		= nullptr;
+IDWriteFactory		*	App::_pDWriteFactory	= nullptr;
 
 int App::Run(_In_ const AppDesc * desc)
 {
@@ -41,7 +41,7 @@ int App::Run(_In_ const AppDesc * desc)
 	_DestroyWindow();
 	_DestroyFactories();
 
-	return msg.wParam;
+	return (int)msg.wParam;
 
 #undef CHECK
 }

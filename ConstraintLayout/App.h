@@ -36,10 +36,10 @@ protected:
 	static const wchar_t		_className[];
 	static const wchar_t		_windowName[];
 
-	static ID2D1Factory		*	_pD2DFactory;
-	static IDWriteFactory	*	_pDWriteFactory;
-	static float				_dpiX;
-	static float				_dpiY;
+	static ID2D1Factory1		*	_pD2DFactory;
+	static IDWriteFactory		*	_pDWriteFactory;
+	static float					_dpiX;
+	static float					_dpiY;
 
 public:
 

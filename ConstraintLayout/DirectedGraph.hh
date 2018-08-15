@@ -405,5 +405,12 @@ public:
 		}
 		return rtn;
 	}
+	
+	void Clear()
+	{
+		_vertices.clear();
+		_edges.clear();
+		_edgesSize = 0;
+	}
 
 };

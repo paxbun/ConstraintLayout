@@ -1,9 +1,17 @@
 #include "stdafx.h"
 #include "ConstraintView.h"
 
+size_t const ConstraintView::_idx_nan	= std::numeric_limits<size_t>::max();
+float const ConstraintView::_nan		= std::numeric_limits<float>::quiet_NaN();
 
 ConstraintView::ConstraintView()
-	: _elementDependencies(), _width(_desc->scrnWidth), _height(_desc->scrnHeight)
+	: _elementDependencies(), _width(_desc->scrnWidth), _height(_desc->scrnHeight),
+	_name_map({
+		{ "ScreenLeft", _idx_nan - 1 },
+		{ "ScreenRight", _idx_nan - 2 },
+		{ "ScreenTop", _idx_nan - 3 },
+		{ "ScreenBottom", _idx_nan - 4 }
+	})
 {}
 
 
@@ -12,8 +20,6 @@ ConstraintView::~ConstraintView()
 
 bool ConstraintView::OnCreate()
 {
-	if (!_InitializeElements())
-		return false;
 	if (!_InitializeWindow())
 		return false;
 	if (!_InitializeD2D())
@@ -46,24 +52,24 @@ bool ConstraintView::OnSizeChange(WORD x, WORD y)
 
 bool ConstraintView::OnUpdate()
 {
-	static auto const nan = std::numeric_limits<float>::quiet_NaN();
+	_InitializeElements();
+
 	static auto const valueByConstraint = [this](const ConstraintViewElement::Constraint & constraint) -> float
 	{
-		static auto const idx_nan = std::numeric_limits<size_t>::max();
 
 		// If the constraint targets to the edge of the screen
-		if (constraint.target == idx_nan - 1)
+		if (constraint.target == _idx_nan - 1)
 			return 0;
-		else if (constraint.target == idx_nan - 2)
+		else if (constraint.target == _idx_nan - 2)
 			return (float)_width;
-		else if (constraint.target == idx_nan - 3)
+		else if (constraint.target == _idx_nan - 3)
 			return 0;
-		else if (constraint.target == idx_nan - 4)
+		else if (constraint.target == _idx_nan - 4)
 			return (float)_height;
 
 
 		if (constraint.target >= _elementDependencies.VerticesSize())
-			return nan;
+			return _nan;
 
 		auto & target = _elementDependencies.VertexAt(constraint.target).value;
 		switch (constraint.targetDirection)
@@ -77,7 +83,7 @@ bool ConstraintView::OnUpdate()
 		case DIRECTION_BOTTOM:
 			return target.y + target.height;
 		}
-		return nan;
+		return _nan;
 	};
 
 	for (auto i : _topologicalSort)
@@ -144,7 +150,8 @@ bool ConstraintView::OnRender()
 			D2D1::ColorF(
 				value.elem.r,
 				value.elem.g,
-				value.elem.b
+				value.elem.b,
+				value.elem.a
 			)
 		);
 		auto rect = D2D1::RectF(
@@ -156,7 +163,7 @@ bool ConstraintView::OnRender()
 		_pRT->FillRectangle(rect, _pBrush);
 
 		_pBrush->SetColor(
-			D2D1::ColorF(1.0f, 1.0f, 1.0f)
+			D2D1::ColorF(1.0f, 1.0f, 1.0f, value.elem.a)
 		);
 		_pRT->DrawTextW(
 			value.elem.content.c_str(), (UINT32)value.elem.content.size(),
@@ -177,15 +184,8 @@ bool ConstraintView::_AddElement(
 	std::string name,
 	std::vector<_AddElementArg> dependency)
 {
-	static size_t const idx_nan = std::numeric_limits<size_t>::max();
-	static std::map<std::string, size_t> name_map = {
-		{ "ScreenLeft", idx_nan - 1 },
-		{ "ScreenRight", idx_nan - 2 },
-		{ "ScreenTop", idx_nan - 3 },
-		{ "ScreenBottom", idx_nan - 4 }
-	};
 
-	if (auto it = name_map.find(name); it != name_map.end())
+	if (auto it = _name_map.find(name); it != _name_map.end())
 		return false;
 
 
@@ -196,11 +196,11 @@ bool ConstraintView::_AddElement(
 	{
 		if (dependency.at(i).name.empty())
 		{
-			new_elem.constraint[i].target = idx_nan;
+			new_elem.constraint[i].target = _idx_nan;
 			new_elem.constraint[i].targetDirection = DIRECTION_UNKNOWN;
 			new_elem.constraint[i].value = 0;
 		}
-		else if (auto it = name_map.find(dependency.at(i).name); it != name_map.end())
+		else if (auto it = _name_map.find(dependency.at(i).name); it != _name_map.end())
 		{
 			new_elem.constraint[i].target = it->second;
 			new_elem.constraint[i].targetDirection = dependency.at(i).direction;
@@ -211,21 +211,21 @@ bool ConstraintView::_AddElement(
 	}
 
 
-	for (int i = dependency.size(); i < 4; i++)
+	for (int i = (int)dependency.size(); i < 4; i++)
 	{
-		new_elem.constraint[i].target = idx_nan;
+		new_elem.constraint[i].target = _idx_nan;
 		new_elem.constraint[i].targetDirection = DIRECTION_UNKNOWN;
 		new_elem.constraint[i].value = 0;
 	}
 
 	auto new_idx = _elementDependencies.VerticesSize();
-	name_map.insert(std::make_pair(name, _elementDependencies.VerticesSize()));
+	_name_map.insert(std::make_pair(name, _elementDependencies.VerticesSize()));
 	_elementDependencies.PushVertex(std::move(new_elem));
 
 	auto & inserted = _elementDependencies.VertexAt(new_idx).value;
 
 	for (int i = 0; i < 4; i++)
-		if (inserted.constraint->target < idx_nan - 4)
+		if (inserted.constraint->target < _idx_nan - 4)
 			_elementDependencies.PushEdge({ inserted.constraint->target, new_idx });
 
 	return true;
@@ -274,6 +274,8 @@ bool ConstraintView::_InitializeD2D()
 		&_pBrush
 	));
 
+
+
 	CHECK(_pDWriteFactory->CreateTextFormat(
 		L"Segoe UI Light",
 		NULL,
@@ -292,13 +294,23 @@ bool ConstraintView::_InitializeD2D()
 
 bool ConstraintView::_InitializeElements()
 {
-	std::ifstream ifs("layout.json", std::ifstream::in);
-	json o; ifs >> o;
-	ifs.close();
+	_topologicalSort.clear();
+	_elementDependencies.Clear();
+	_name_map = {
+		{ "ScreenLeft", _idx_nan - 1 },
+		{ "ScreenRight", _idx_nan - 2 },
+		{ "ScreenTop", _idx_nan - 3 },
+		{ "ScreenBottom", _idx_nan - 4 }
+	};
 
-	for (auto it = o.begin(); it != o.end(); it++)
+	try
 	{
-		try
+
+		std::ifstream ifs("layout.json", std::ifstream::in);
+		json o; ifs >> o;
+		ifs.close();
+
+		for (auto it = o.begin(); it != o.end(); it++)
 		{
 			auto & value = it.value();
 			auto & content = value.at("content");
@@ -331,16 +343,27 @@ bool ConstraintView::_InitializeElements()
 
 			float width = content.at("width");
 			float height = content.at("height");
-			float r = content.at("color").at(0);
-			float g = content.at("color").at(1);
-			float b = content.at("color").at(2);
+			float r = 0.0f;
+			float g = 0.0f;
+			float b = 0.0f;
+			float a = 1.0f;
+			try
+			{
+				auto & color = content.at("color");
+				r = color.at(0);
+				g = color.at(1);
+				b = color.at(2);
+				a = color.at(3);
+			}
+			catch (const std::exception &)
+			{}
 			std::wstring text = ToWideChar(content.at("text").get<std::string>());
 
 
 			if (!_AddElement(
 				ViewElement(
 					width, height,
-					r, g, b,
+					r, g, b, a,
 					text
 				),
 				it.key(),
@@ -348,10 +371,10 @@ bool ConstraintView::_InitializeElements()
 			))
 				return false;
 		}
-		catch (const json::exception & ex)
-		{
-			return false;
-		}
+	}
+	catch (const std::exception &)
+	{
+		return false;
 	}
 
 	return _UpdateDependency();

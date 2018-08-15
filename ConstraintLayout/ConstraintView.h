@@ -13,7 +13,7 @@ enum Direction
 struct ViewElement
 {
 	float width, height;
-	float r, g, b;
+	float r, g, b, a;
 	std::wstring content;
 
 	inline ViewElement()
@@ -22,10 +22,10 @@ struct ViewElement
 
 	inline ViewElement(
 		float width, float height,
-		float r, float g, float b,
+		float r, float g, float b, float a,
 		std::wstring content = L""
 	)
-		: width(width), height(height), r(r), g(g), b(b), content(content)
+		: width(width), height(height), r(r), g(g), b(b), a(a), content(content)
 	{}
 };
 
@@ -76,11 +76,13 @@ private:
 	int		_height;
 	ID2D1HwndRenderTarget	*	_pRT;
 	ID2D1SolidColorBrush	*	_pBrush;
+	ID2D1Effect				*	_pEffect;
 	IDWriteTextFormat		*	_pFormat;
 	
-	DirectedGraph<ConstraintViewElement>		_elementDependencies;
+	DirectedGraph<ConstraintViewElement>	_elementDependencies;
 	std::vector<size_t>						_topologicalSort;
-	
+	std::map<std::string, size_t>			_name_map;
+
 	struct _AddElementArg
 	{
 		std::string name;
@@ -100,5 +102,8 @@ private:
 	bool _InitializeElements();
 	bool _UpdateDependency();
 	void _DestroyD2D();
+
+	static size_t const _idx_nan;
+	static float const _nan;
 };
 
